@@ -4,20 +4,14 @@ function parseInput(input: Input) {
   return input.split("\n").map(Number);
 }
 
-function countLargerThanPrevious(sums: Array<Number>) {
-  return sums.reduce(
-    ({ largerMeasurements, previous }, currentValue) => {
-      return {
-        largerMeasurements:
-          previous < currentValue ? largerMeasurements + 1 : largerMeasurements,
-        previous: currentValue,
-      };
-    },
-    { largerMeasurements: 0, previous: sums[0] }
-  ).largerMeasurements;
+function countLargerThanPrevious(measurements: Array<number>) {
+  return measurements.filter((measurement, index, arr) => {
+    return measurement > arr[index - 1];
+  }).length;
 }
 
 function getWindowedMeasurement(numbers: Array<number>) {
+  // get three window slice
   const getSumOfThreeMeasurementSlidingWindow = (
     index: number,
     numbers: Array<number>
@@ -26,12 +20,12 @@ function getWindowedMeasurement(numbers: Array<number>) {
       return numbers[index] + numbers[index + 1] + numbers[index + 2];
     }
 
-    return null;
+    return NaN;
   };
 
-  return numbers
-    .map((_, index, arr) => getSumOfThreeMeasurementSlidingWindow(index, arr))
-    .filter((sum) => sum !== null) as Array<number>;
+  return numbers.map((_, index, arr) =>
+    getSumOfThreeMeasurementSlidingWindow(index, arr)
+  );
 }
 
 export const solution = (input: Input) => {
@@ -43,7 +37,5 @@ export const solution = (input: Input) => {
 export const solution2 = (input: Input) => {
   const numbers = parseInput(input);
 
-  const moreAccurateMeasuring = getWindowedMeasurement(numbers);
-
-  return countLargerThanPrevious(moreAccurateMeasuring);
+  return countLargerThanPrevious(getWindowedMeasurement(numbers));
 };
