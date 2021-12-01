@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "strict": true,
+    "noEmit": true,
+    "downlevelIteration": true
+  },
+  "include": ["src"]
+}
