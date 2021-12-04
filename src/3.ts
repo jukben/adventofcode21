@@ -38,30 +38,48 @@ export const solution = (input: Input) => {
 export const solution2 = (input: Input) => {
   let report = parseInput(input);
 
-  let bitToLookFor = 0;
-  while (report.length > 1) {
-    const analyzedReport = report.reduce((acc, curr, index, arr) => {
-      for (let i = 0; i < arr[index].length; i++) {
-        const b = arr[index][i] as "0" | "1";
-        acc[i] = acc[i] ? [...acc[i], b] : [b];
-      }
+  function getBinaryNumber(
+    report: Array<string>,
+    comparator: (re: Record<number, Array<"0" | "1">>, bit: number) => "0" | "1"
+  ) {
+    let bitToLookFor = 0;
 
-      return acc;
-    }, {} as Record<number, Array<"0" | "1">>);
+    while (report.length > 1) {
+      const analyzedReport = report.reduce((acc, curr, index, arr) => {
+        for (let i = 0; i < arr[index].length; i++) {
+          const b = arr[index][i] as "0" | "1";
+          acc[i] = acc[i] ? [...acc[i], b] : [b];
+        }
 
-    const bitToCompare =
-      analyzedReport[bitToLookFor].filter((b) => b === "1").length >=
-      analyzedReport[bitToLookFor].filter((b) => b === "0").length
-        ? "1"
-        : "0";
+        return acc;
+      }, {} as Record<number, Array<"0" | "1">>);
 
-    report = report.filter((value) => {
-      return value[bitToLookFor] === bitToCompare;
-    });
-    bitToLookFor++;
+      report = report.filter((value) => {
+        return value[bitToLookFor] === comparator(analyzedReport, bitToLookFor);
+      });
+      bitToLookFor++;
+    }
+
+    return report[0];
   }
 
-  console.log(report[0]);
+  const oxygenGeneratorRating = getBinaryNumber(
+    report,
+    (re: Record<number, Array<"0" | "1">>, bit: number) =>
+      re[bit].filter((b) => b === "1").length >=
+      re[bit].filter((b) => b === "0").length
+        ? "1"
+        : "0"
+  );
 
-  return 0;
+  const cO2scrubberRating = getBinaryNumber(
+    report,
+    (re: Record<number, Array<"0" | "1">>, bit: number) =>
+      re[bit].filter((b) => b === "1").length <
+      re[bit].filter((b) => b === "0").length
+        ? "1"
+        : "0"
+  );
+
+  return parseInt(oxygenGeneratorRating, 2) * parseInt(cO2scrubberRating, 2);
 };
