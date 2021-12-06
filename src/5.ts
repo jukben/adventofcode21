@@ -98,8 +98,9 @@ export function createMap(input: Input) {
 export const solution = (input: Input) => {
   const { drawLine, map, inputLines, printDiagram } = createMap(input);
   for (const line of inputLines) {
-    // For now, only consider horizontal and vertical lines: lines where either x1 = x2 or y1 = y2.
     const [[x1, y1], [x2, y2]] = line;
+
+    // For now, only consider horizontal and vertical lines: lines where either x1 = x2 or y1 = y2.
     if (x1 !== x2 && y1 !== y2) {
       continue;
     }
@@ -115,7 +116,6 @@ export const solution = (input: Input) => {
 export const solution2 = (input: Input) => {
   const { drawLine, map, inputLines, printDiagram } = createMap(input);
   for (const line of inputLines) {
-    // For now, only consider horizontal and vertical lines: lines where either x1 = x2 or y1 = y2.
     const [[x1, y1], [x2, y2]] = line;
 
     drawLine(x1, y1, x2, y2);
