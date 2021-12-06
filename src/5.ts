@@ -5,7 +5,9 @@ type LineCoords = [[number, number], [number, number]];
 function parseInput(input: Input) {
   return input.split("\n").reduce((acc, curr, index) => {
     acc.push(
-      curr.split("->").map((a) => a.split(",").map(Number)) as LineCoords
+      curr
+        .split("->")
+        .map((a) => a.split(",").map((n) => parseInt(n, 10))) as LineCoords
     );
     return acc;
   }, [] as Array<LineCoords>);
@@ -21,7 +23,7 @@ export function createMap(input: Input) {
 
   function getPoint(x: number, y: number) {
     if (map[sizeOfWorld * y + x] === undefined) {
-      throw Error("out of bound");
+      throw Error(`out of bound (${x}, ${y})`);
     }
 
     return map[sizeOfWorld * y + x];
@@ -32,12 +34,39 @@ export function createMap(input: Input) {
   }
 
   function drawLine(x1: number, y1: number, x2: number, y2: number) {
-    const [_x1, _x2] = [x1, x2].sort();
-    const [_y1, _y2] = [y1, y2].sort();
+    // meh, this is dirty...
+    const isDiagonal = x1 !== x2 && y1 !== y2;
 
-    for (let x = _x1; x <= _x2; x++) {
-      for (let y = _y1; y <= _y2; y++) {
-        drawPoint(x, y);
+    if (isDiagonal) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+
+      let nx = undefined;
+      let ny = undefined;
+
+      for (let x = 0; x < Math.abs(dx) + 1; x++) {
+        if (dx < 0) {
+          nx = x2 + x;
+        } else {
+          nx = x2 - x;
+        }
+
+        if (dy < 0) {
+          ny = y2 + x;
+        } else {
+          ny = y2 - x;
+        }
+
+        drawPoint(nx, ny);
+      }
+    } else {
+      const [_x1, _x2] = [x1, x2].sort((a, b) => a - b);
+      const [_y1, _y2] = [y1, y2].sort((a, b) => a - b);
+
+      for (let x = _x1; x <= _x2; x++) {
+        for (let y = _y1; y <= _y2; y++) {
+          drawPoint(x, y);
+        }
       }
     }
   }
@@ -84,5 +113,15 @@ export const solution = (input: Input) => {
 };
 
 export const solution2 = (input: Input) => {
-  return 0;
+  const { drawLine, map, inputLines, printDiagram } = createMap(input);
+  for (const line of inputLines) {
+    // For now, only consider horizontal and vertical lines: lines where either x1 = x2 or y1 = y2.
+    const [[x1, y1], [x2, y2]] = line;
+
+    drawLine(x1, y1, x2, y2);
+  }
+
+  const numberOfOverlaps = map.filter((x) => x >= 2).length;
+
+  return { numberOfOverlaps, diagram: printDiagram() };
 };
