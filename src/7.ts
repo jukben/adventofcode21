@@ -5,12 +5,13 @@ function parseInput(input: Input) {
 }
 
 function calculateFuelConsumption(steps: number) {
+  // https://math.stackexchange.com/questions/2260/proof-1234-cdotsn-fracn-timesn1
   return ((steps + 1) / 2) * steps;
 }
 
 export const solution = (input: Input, advanced = false) => {
   const crabs = parseInput(input);
-  // optimization?
+
   const positionsToTryAlignment = Array.from(
     { length: Math.max(...crabs) + 1 },
     (_, i) => i
