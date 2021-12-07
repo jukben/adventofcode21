@@ -1,11 +1,5 @@
 import { solution } from "./6";
 
-describe("utils", () => {
-  it("correctly asses winning board", () => {
-    expect(true).toBe(true);
-  });
-});
-
 describe("⭐", () => {
   it(`Simple test`, () => {
     expect(solution(`3,4,3,1,2`, 18)).toBe(26);
