@@ -4,67 +4,7 @@ function parseInput(input: Input) {
   return input.split("\n").map((a) => a.trim().split("-"));
 }
 
-export const solution = (input: Input) => {
-  const graphConfiguration = parseInput(input);
-
-  type GraphNode = {
-    id: string;
-    links: Array<GraphNode>;
-  };
-
-  const nodes = {} as Record<string, GraphNode>;
-
-  // configure somehow something like graph, I have no idea. I will give it hour or so and then I will study theory of graphs
-  graphConfiguration.forEach(([a, b]) => {
-    if (!nodes[a]) {
-      nodes[a] = {
-        id: a,
-        links: [],
-      };
-    }
-
-    if (!nodes[b]) {
-      nodes[b] = {
-        id: b,
-        links: [],
-      };
-    }
-
-    nodes[a].links.push(nodes[b]);
-    nodes[b].links.push(nodes[a]);
-  });
-
-  const paths = [];
-
-  function traverse(from: string = "start", visited = [] as Array<string>) {
-    const { id, links } = nodes[from];
-
-    if (id === "end") {
-      paths.push([...visited, "end"]);
-      return;
-    }
-
-    if (id !== "start" && visited.includes(id) && id.toLowerCase() === id) {
-      return;
-    }
-
-    visited.push(id);
-
-    for (let link of links) {
-      if (link.id === "start") {
-        continue;
-      }
-
-      traverse(link.id, [...visited]);
-    }
-  }
-
-  traverse();
-
-  return paths.length;
-};
-
-export const solution2 = (input: Input) => {
+function createGraph(input: Input) {
   const graphConfiguration = parseInput(input);
 
   type GraphNode = {
@@ -99,13 +39,13 @@ export const solution2 = (input: Input) => {
   function traverse(
     from: string = "start",
     visited = [] as Array<string>,
-    specialSmallCave: string
+    specialSmallCave = null as string | null
   ) {
     const { id, links } = nodes[from];
 
     if (id === "end") {
       paths.push([...visited, "end"]);
-      return;
+      return paths;
     }
 
     if (
@@ -114,7 +54,7 @@ export const solution2 = (input: Input) => {
         (specialSmallCave === id ? 1 : 0) &&
       id.toLowerCase() === id
     ) {
-      return;
+      return paths;
     }
 
     visited.push(id);
@@ -126,19 +66,33 @@ export const solution2 = (input: Input) => {
 
       traverse(link.id, [...visited], specialSmallCave);
     }
+
+    return paths;
   }
 
-  const uniqueSmallCaves = [
-    ...new Set(
-      graphConfiguration
-        .flatMap((a) => [...a])
-        .filter((a) => !["start", "end"].includes(a) && a.toLowerCase() === a)
-    ),
-  ];
+  return { nodes, traverse };
+}
 
+export const solution = (input: Input) => {
+  const { traverse } = createGraph(input);
+
+  const paths = traverse();
+
+  return paths.length;
+};
+
+export const solution2 = (input: Input) => {
+  const { nodes, traverse } = createGraph(input);
+  let paths = [] as Array<Array<string>>;
+
+  // After reviewing the available paths, you realize you might have time to visit a single small cave twice.
+  // Specifically, big caves can be visited any number of times, a single small cave can be visited at most twice,
+  // and the remaining small caves can be visited at most once.
+  const uniqueSmallCaves = [...new Set(Object.keys(nodes))];
   for (let smallCaveTwice of uniqueSmallCaves) {
-    traverse("start", [], smallCaveTwice);
+    paths = paths.concat(traverse("start", [], smallCaveTwice));
   }
 
+  // remove duplicate paths
   return [...new Set(paths.map((a) => a.join(",")))].length;
 };
