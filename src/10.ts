@@ -1,103 +1,102 @@
 type Input = string;
 
 function parseInput(input: Input) {
-  return input.split("\n").map((a) => a.trim().split("").map(Number));
+  return input.split("\n").map((a) => a.trim()) as unknown as Chars[][];
 }
 
-function flash(
-  x: number,
-  y: number,
-  map: number[][],
-  flashed: Map<string, boolean>
-) {
-  function incrementOctopus(x: number, y: number, map: number[][]) {
-    if (!flashed.get(`${x}${y}`)) map[y][x]++;
+type Chars = "(" | ")" | "[" | "]" | "{" | "}" | "<" | ">";
+
+function scanLine(line: Chars[]) {
+  const pairs = [
+    ["(", ")"],
+    ["[", "]"],
+    ["{", "}"],
+    ["<", ">"],
+  ] as const;
+
+  const openings = pairs.map(([opening]) => opening);
+  const closings = pairs.map(([_, closing]) => closing);
+  const stack = [];
+
+  for (let i = 0; i < line.length; i++) {
+    const symbol = line[i];
+    if (openings.find((o) => o === symbol)) {
+      stack.push(symbol);
+      continue;
+    }
+
+    if (closings.find((c) => c === symbol)) {
+      const expectedPairTo = stack.pop();
+      const expected = pairs.find(
+        ([opening]) => opening === expectedPairTo
+      )![1];
+
+      if (symbol !== expected) {
+        return {
+          valid: false,
+          found: symbol as typeof closings[number],
+          expected,
+          stack,
+        };
+      }
+    }
   }
 
-  // This increases the energy level of all adjacent octopuses by 1, including octopuses that are diagonally adjacent.
-  if (y < map.length - 1) {
-    incrementOctopus(x, y + 1, map);
+  let toComplete = [] as typeof closings;
+  if (stack.length) {
+    toComplete = [...stack]
+      .reverse()
+      .map((a) => pairs.find(([opening]) => opening === a)![1]);
   }
 
-  if (x < map[0].length - 1) {
-    incrementOctopus(x + 1, y, map);
-  }
-
-  if (y > 0) {
-    incrementOctopus(x, y - 1, map);
-  }
-
-  if (x > 0) {
-    incrementOctopus(x - 1, y, map);
-  }
-
-  // diagonal
-  if (x > 0 && y > 0) {
-    incrementOctopus(x - 1, y - 1, map);
-  }
-
-  if (y > 0 && x < map[0].length - 1) {
-    incrementOctopus(x + 1, y - 1, map);
-  }
-
-  if (y < map.length - 1 && x > 0) {
-    incrementOctopus(x - 1, y + 1, map);
-  }
-
-  if (y < map.length - 1 && x < map[0].length - 1) {
-    incrementOctopus(x + 1, y + 1, map);
-  }
-
-  // Finally, any octopus that flashed during this step has its energy level set to 0, as it used all of its energy to flash.
-  map[y][x] = 0;
+  return { valid: true, toComplete };
 }
+
+export const solution = (input: Input) => {
+  const scoreTable = {
+    ")": 3,
+    "]": 57,
+    "}": 1197,
+    ">": 25137,
+  } as const;
+
+  const lines = parseInput(input);
+
+  let score = 0;
+  for (let line of lines) {
+    const { valid, found } = scanLine(line);
+    if (!valid && found) {
+      score += scoreTable[found];
+    }
+  }
+
+  return score;
+};
 
 export const solution2 = (input: Input) => {
-  const map = parseInput(input);
+  const scoreTable = {
+    ")": 1,
+    "]": 2,
+    "}": 3,
+    ">": 4,
+  } as const;
 
-  // step
-  let step = 1;
-  let flashed: Map<string, boolean>;
-  let flashes = 0;
-  const flashesInSteps = new Map();
-  while (true) {
-    let localFlashes = 0;
+  const lines = parseInput(input);
 
-    // First, the energy level of each octopus increases by 1.
-    for (let y = 0; y < map.length; y++) {
-      for (let x = 0; x < map[0].length; x++) {
-        map[y][x]++;
-      }
-    }
+  const scores = [] as number[];
+  for (let line of lines) {
+    const { valid, toComplete } = scanLine(line);
 
-    // First, the energy level of each octopus increases by 1.
-    // An octopus can only flash at most once per step.)
-    flashed = new Map();
+    if (!valid) continue;
+    if (!toComplete) continue;
 
-    let hasFlashed = 1;
-    while (hasFlashed) {
-      for (let y = 0; y < map.length; y++) {
-        for (let x = 0; x < map[0].length; x++) {
-          if (map[y][x] > 9 && !flashed.get(`${x}${y}`)) {
-            flashed.set(`${x}${y}`, true);
-            flash(x, y, map, flashed);
-            localFlashes++;
-            hasFlashed++;
-          }
-        }
-      }
-      hasFlashed--;
-    }
+    let score = toComplete.reduce((acc, v) => {
+      return acc * 5 + scoreTable[v];
+    }, 0);
 
-    if (localFlashes === map.length * map[0].length) {
-      return {
-        synchronizedIn: step,
-        flashesInSteps,
-      };
-    }
-
-    flashes += localFlashes;
-    flashesInSteps.set(step, flashes);
-    step++;
+    scores.push(score);
   }
+
+  // take the middle score
+  return scores.sort((a, b) => a - b)[Math.round(scores.length / 2) - 1];
 };
