@@ -15,20 +15,25 @@ function parseInput(input: Input) {
     .slice(0, delimiter)
     .map((a) => a.split(",").map((a) => Number(a)));
 
+  const getMax = (n: "x" | "y") => {
+    const map = {
+      x: 0,
+      y: 1,
+    } as const;
+
+    return Math.max(
+      ...dots.flatMap((a) => {
+        return a[map[n]];
+      }, [])
+    );
+  };
+
   return {
     dots,
     foldInstruction,
     sizeOfPaper: {
-      x: Math.max(
-        ...dots.flatMap((a) => {
-          return a[0];
-        }, [])
-      ),
-      y: Math.max(
-        ...dots.flatMap((a) => {
-          return a[1];
-        }, [])
-      ),
+      x: getMax("x"),
+      y: getMax("y"),
     },
   };
 }
@@ -57,30 +62,31 @@ export const solution = (input: Input) => {
   for (let [axis, number] of foldInstruction) {
     world = [];
 
-    if (axis === "y") {
-      for (let y = 0; y < number; y++) {
-        for (let x = 0; x < oldWorld[0].length; x++) {
-          if (!world[y]) world[y] = [];
+    // fold configuration
+    const configuration = {
+      y: {
+        toY: number,
+        toX: oldWorld[0].length,
+        foldY: (y: number) => oldWorld.length - 1 - y,
+        foldX: (x: number) => x,
+      },
+      x: {
+        toY: oldWorld.length,
+        toX: number,
+        foldY: (y: number) => y,
+        foldX: (x: number) => oldWorld[0].length - 1 - x,
+      },
+    } as const;
 
-          if (oldWorld[oldWorld.length - 1 - y][x] === "#") {
-            world[y][x] = oldWorld[oldWorld.length - 1 - y][x];
-          } else {
-            world[y][x] = oldWorld[y][x];
-          }
-        }
-      }
-    }
+    const { foldX, foldY, toX, toY } = configuration[axis];
+    for (let y = 0; y < toY; y++) {
+      for (let x = 0; x < toX; x++) {
+        if (!world[y]) world[y] = [];
 
-    if (axis === "x") {
-      for (let y = 0; y < oldWorld.length; y++) {
-        for (let x = 0; x < number; x++) {
-          if (!world[y]) world[y] = [];
-
-          if (oldWorld[y][oldWorld[0].length - 1 - x] === "#") {
-            world[y][x] = oldWorld[y][oldWorld[0].length - 1 - x];
-          } else {
-            world[y][x] = oldWorld[y][x];
-          }
+        if (oldWorld[foldY(y)][foldX(x)] === "#") {
+          world[y][x] = oldWorld[foldY(y)][foldX(x)];
+        } else {
+          world[y][x] = oldWorld[y][x];
         }
       }
     }
